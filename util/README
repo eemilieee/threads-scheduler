@@ -1,0 +1,54 @@
+Tema 2 - Planificator de thread-uri
+Arpasanu Emilia-Oana, 321 CA
+
+Scopul planificatorului realizat este de a gestiona executia thread-urilor
+create de procesele initiate de catre utilizator. Acesta este destinat
+sistemelor uniprocesor, in cadrul carora poate rula un singur thread
+la un anumit moment de timp, avand astfel loc fenomenul de preemptie.
+Ordinea in care thread-urile isi executa instructiunile este data de
+algoritmul Round Robin, procedeul avand la baza o coada cu prioritati
+(un vector de thread-uri sortat descrescator dupa prioritatile lor).
+Faptul ca un thread are dreptul sau nu sa ruleze este determinat
+de un mecanism de sincronizare ce poarta numele de semafor
+("verde" -> sem_post() si "rosu"-> sem_wait()).
+
+Implementarea presupune existenta mai multor operatii:
+
+    - initializarea planificatorului (INIT): aici se aloca memoria necesara si
+    se populeaza campurile ce il compun daca informatiile primite ca parametri
+    (cuanta de timp specifica unui thread si numarul de dispozitive I/O ce se
+    pot utiliza sunt valide); daca actiunea a avut loc cu succes, se returneaza
+    0; altfel, se returneaza un numar negativ semnaland eroarea;
+
+    - pornirea unui nou thread (FORK): in acest caz se aloca un alt thread,
+    se initializeaza campurile sale si se adauga la lista ce retine toate
+    thread-urile initiate de proces; dupa aceea, daca nu exista un thread
+    curent ce ruleaza, acesta devine thread-ul cel nou, care este pus sa
+    ruleze pe procesor; altfel, daca planificatorul are deja un thread curent,
+    se decide daca el isi continua rularea (nu mai este prezent in coada
+    nicun thread cu prioritate mai mare) sau daca trebuie
+    sa fie preemptat, dreptul de executie fiind preluat de thread-ul cu
+    prioritatea cea mai mare ce asteapta in coada;
+
+    - executia unei instructiuni pe procesor (EXEC): cuanta de timp
+    a thread-ului curent este decrementata, el este pus in asteptare
+    si se determina ce thread trebuie sa ruleze in continuare, conform
+    algoritmului (fie urmatorul din coada, fie chiar cel curent);
+
+    - asteptarea unei operatii cu un dispozitiv I/O (WAIT): se verifica daca
+    dispozitivul I/O ce ar trebui sa fie asteptat de thread-ul curent este
+    valid; daca conditia este indeplinita, se semnaleaza faptul ca thread-ul
+    este in asteptare, caz in care el este preemptat, pe procesor ruleaza
+    urmatorul thread din coada si se returneaza 0 (succes); altfel, se
+    returneaza o valoare negativa (insucces);
+
+    - identificarea thread-urilor create care asteapta un anumit dispozitiv I/O
+    (SIGNAL): se verifica daca dispozitivul I/O ce ar trebui sa fie asteptat
+    este unul corect; daca conditia este indeplinita, se numara cate thread-uri
+    sunt in asteptarea dispozitivului mentionat, acestea fiind inserate in
+    coada thread-urilor ce sunt gata de executie; la final, se continua
+    procesul de rulare si se returneaza numarul thread-urilor identificate;
+    altfel, se returneaza o valoare negativa (insucces);
+
+    - eliberarea resurselor utilizate (END): se asteapta incheierea executiei
+    tuturor thread-urilor create si se dealoca memoria ocupata.
